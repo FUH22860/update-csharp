@@ -20,22 +20,59 @@ public class Update {
         processStartInfo.FileName = @"yay";
         processStartInfo.WorkingDirectory = getHomePath();
         //processStartInfo.Arguments = "--color";
-        processStartInfo.RedirectStandardOutput = false;
-        processStartInfo.RedirectStandardError = false;
-        processStartInfo.UseShellExecute = true;
+        processStartInfo.RedirectStandardOutput = true;
+        processStartInfo.RedirectStandardError = true;
+        processStartInfo.UseShellExecute = false;
 
         process.StartInfo = processStartInfo;
         process.Start();
 
-        process.StandardInput.WriteLine(" ");
+        // Read the output of the "yay" command
+        string output = process.StandardOutput.ReadLine();
+        string error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
 
-        //shellStream.WriteLine("passwd fadwa");
-        //shellStream.Expect("Enter new password:");
-        //shellStream.WriteLine("fadwa");
-        //shellStream.Expect("Retype new password:");
-        //shellStream.WriteLine("fadwa");
+        Console.WriteLine(output);
+        Console.WriteLine(error);
 
     }
+
+    // using System;
+// using System.Diagnostics;
+
+// namespace UpdateLinux
+// {
+//     class Program
+//     {
+//         static void Main(string[] args)
+//         {
+//             Console.WriteLine("Updating Linux system...");
+
+//             // Use the Process class to run the "apt-get update" command
+//             var process = new Process()
+//             {
+//                 StartInfo = new ProcessStartInfo
+//                 {
+//                     FileName = "yay",
+//                     UseShellExecute = false,
+//                     RedirectStandardOutput = true,
+//                     RedirectStandardError = true
+//                 }
+//             };
+//             process.Start();
+
+//             // Read the output of the "apt-get update" command
+//             string output = process.StandardOutput.ReadToEnd();
+//             string error = process.StandardError.ReadToEnd();
+//             process.WaitForExit();
+
+//             Console.WriteLine(output);
+//             Console.WriteLine(error);
+
+//             Console.WriteLine("Linux system updated!");
+//         }
+//     }
+// }
 
     public static string copyEverthingToBackup() {
         string fileName = "fstab";

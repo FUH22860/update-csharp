@@ -2,5 +2,7 @@
     static void Main(string[] args) {
         string result = Update.copyEverthingToBackup();
         Console.WriteLine(result);
+
+        Update.startUpdate();
     }
 }
