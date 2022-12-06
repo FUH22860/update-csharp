@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 public class Update {
     public static string getHomePath() {
         string homePath = string.Empty;
@@ -41,13 +42,15 @@ public class Update {
         string sourcePath = @"/etc/";
         string targetPath =  getHomePath();
 
-        string sourceFile = System.IO.Path.Combine(sourcePath, fileName);
-        string destFile = System.IO.Path.Combine(targetPath, fileName);
+        string backupPath = targetPath + "/backup/";
 
-        System.IO.Directory.CreateDirectory(targetPath);
+        string sourceFile = Path.Combine(sourcePath, fileName);
+        string destFile = Path.Combine(backupPath, fileName);
 
-        System.IO.File.Copy(sourceFile, destFile, true);
+        Directory.CreateDirectory(backupPath);
 
-        return $"Copied {fileName} to {targetPath}";
+        File.Copy(sourceFile, destFile, true);
+
+        return $"Copied {fileName} to {backupPath}";
     }
 }
