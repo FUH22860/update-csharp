@@ -1,8 +1,9 @@
 ﻿public class Program {
     static void Main(string[] args) {
-        string result = Update.copyEverthingToBackup();
+        string result = Update.copyEverthingBeforeUpdateToBackupLocation();
         Console.WriteLine(result);
 
-        Update.startUpdate();
+        string result2 = Update.copyEverthingFromBackupLocationToFinalDestination();
+        Console.WriteLine(result2);
     }
 }

@@ -1,6 +1,8 @@
 # update-c#
 
 A rewrite of the legendary update script in C#
+
+This time with file handling entirely in C# while keeping all scripting parts in bash.
 ## Authors
 
 - [@ProfessionalUwU](http://192.168.0.69:3000/ProfessionalUwU)
@@ -46,11 +48,20 @@ Run executable
 ```bash
   ./update
 ```
-## Roadmap
+## Roadmap/ToDo
 
 - Figure out how to do options/arguments
-- Backup important files
-- Figure out how to make a single executable
+- Backup all necessary files
+- Shrink size of the executable
+- Potentially speed up file handling
+- Color output according to state (success = green, failure = red, info = yellow)
+- Backup pacman database
+- Compress all files to single archive
+
+## Sites I used to help make this project
+- [dotnetperls](https://dotnetperls.com)
+- [stackoverflow](https://stackoverflow.com/questions/tagged/c%23)
+- [c-sharpcorner](https://www.c-sharpcorner.com)
 ## Contributing
 
 Contributions are always welcome!

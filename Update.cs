@@ -11,33 +11,53 @@ public class Update {
             throw new ApplicationException("This script doesn't support your operating system.");
         }
     }
+    public static string copyEverthingBeforeUpdateToBackupLocation() {
+        string targetPath = getHomePath() + "/backup/";
+        
+        string[] systemFilesToCopy = {"/etc/fstab", "/etc/makepkg.conf"};
+        List<string> filesToCopy = new List<string>(systemFilesToCopy);
 
-    public static void startUpdate() {
-        Process process = new Process();
+        string pacmanPackageListBeforeUpdate = getHomePath() + "/pacman-pre.txt";
+        filesToCopy.Add(pacmanPackageListBeforeUpdate);
+        string flatpakListBeforeUpdate = getHomePath() + "/flatpak-pre.txt";
+        filesToCopy.Add(flatpakListBeforeUpdate);
 
-        ProcessStartInfo processStartInfo = new ProcessStartInfo();
-        //processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-        processStartInfo.FileName = @"yay";
-        processStartInfo.WorkingDirectory = getHomePath();
-        //processStartInfo.Arguments = "--color";
-        processStartInfo.RedirectStandardOutput = true;
-        processStartInfo.RedirectStandardError = true;
-        processStartInfo.UseShellExecute = false;
+        if (!Directory.Exists(targetPath)) {
+            Directory.CreateDirectory(targetPath);
+        } else {
+            foreach (string file in filesToCopy) {
+                FileInfo info = new FileInfo(file);
+                string destFile = Path.Combine(targetPath, info.Name);
+                File.Copy(info.FullName, destFile, true);
+            }
+        }
 
-        process.StartInfo = processStartInfo;
-        process.Start();
+        string copiedFiles = string.Join(", ", filesToCopy);
 
-        // Read the output of the "yay" command
-        string output = process.StandardOutput.ReadLine();
-        string error = process.StandardError.ReadToEnd();
-        process.WaitForExit();
-
-        Console.WriteLine(output);
-        Console.WriteLine(error);
-
+        Console.ForegroundColor = ConsoleColor.Green;
+        return $"Copied {copiedFiles} to {targetPath}";
     }
 
-    // using System;
+    public static string copyEverthingFromBackupLocationToFinalDestination() {
+        string targetPath = "/artemis/test/";
+        string sourcePath = getHomePath() + "/backup/";
+        string[] intermediateBackupLocation = Directory.GetFiles(sourcePath);        
+
+        if (!Directory.Exists(targetPath)) {
+            throw new DirectoryNotFoundException("Target directory not found");
+        } else {
+            foreach (string file in intermediateBackupLocation) {
+                FileInfo info = new FileInfo(file);
+                string destFile = Path.Combine(targetPath, info.Name);
+                File.Copy(info.FullName, destFile, true);
+            }
+        }
+        return $"Copied everything successfully to {targetPath}";
+    }
+
+// Commented code below was written by ChatGPT
+
+// using System;
 // using System.Diagnostics;
 
 // namespace UpdateLinux
@@ -73,21 +93,4 @@ public class Update {
 //         }
 //     }
 // }
-
-    public static string copyEverthingToBackup() {
-        string fileName = "fstab";
-        string sourcePath = @"/etc/";
-        string targetPath =  getHomePath();
-
-        string backupPath = targetPath + "/backup/";
-
-        string sourceFile = Path.Combine(sourcePath, fileName);
-        string destFile = Path.Combine(backupPath, fileName);
-
-        Directory.CreateDirectory(backupPath);
-
-        File.Copy(sourceFile, destFile, true);
-
-        return $"Copied {fileName} to {backupPath}";
-    }
 }
