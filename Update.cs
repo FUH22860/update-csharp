@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.IO;
 public class Update {
     public static string getHomePath() {
         string homePath = string.Empty;
@@ -38,59 +36,35 @@ public class Update {
         return $"Copied {copiedFiles} to {targetPath}";
     }
 
+    /// <summary>
+    /// Method <c>copyEverthingFromBackupLocationToFinalDestination</c> copies everything to second Backup Location which should be a external drive or a network share. Offsite/Second Backup.
+    /// </summary>
     public static string copyEverthingFromBackupLocationToFinalDestination() {
         string targetPath = "/artemis/test/";
-        string sourcePath = getHomePath() + "/backup/";
-        string[] intermediateBackupLocation = Directory.GetFiles(sourcePath);        
 
         if (!Directory.Exists(targetPath)) {
-            throw new DirectoryNotFoundException("Target directory not found");
-        } else {
-            foreach (string file in intermediateBackupLocation) {
-                FileInfo info = new FileInfo(file);
-                string destFile = Path.Combine(targetPath, info.Name);
-                File.Copy(info.FullName, destFile, true);
-            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            return $"Backup location does not exist! Please specify one in the config.";
         }
-        return $"Copied everything successfully to {targetPath}";
+
+        if (targetPath is not null) {
+            string sourcePath = getHomePath() + "/backup/";
+            string[] intermediateBackupLocation = Directory.GetFiles(sourcePath);        
+
+            if (!Directory.Exists(targetPath)) {
+                throw new DirectoryNotFoundException("Target directory not found");
+            } else {
+                foreach (string file in intermediateBackupLocation) {
+                    FileInfo info = new FileInfo(file);
+                    string destFile = Path.Combine(targetPath, info.Name);
+                    File.Copy(info.FullName, destFile, true);
+                }
+            }
+            Console.ForegroundColor = ConsoleColor.Green;
+            return $"Copied everything successfully to {targetPath}";
+        } else {
+            Console.ForegroundColor = ConsoleColor.Red;
+            return "You have not configured a backup location!";
+        }
     }
-
-// Commented code below was written by ChatGPT
-
-// using System;
-// using System.Diagnostics;
-
-// namespace UpdateLinux
-// {
-//     class Program
-//     {
-//         static void Main(string[] args)
-//         {
-//             Console.WriteLine("Updating Linux system...");
-
-//             // Use the Process class to run the "apt-get update" command
-//             var process = new Process()
-//             {
-//                 StartInfo = new ProcessStartInfo
-//                 {
-//                     FileName = "yay",
-//                     UseShellExecute = false,
-//                     RedirectStandardOutput = true,
-//                     RedirectStandardError = true
-//                 }
-//             };
-//             process.Start();
-
-//             // Read the output of the "apt-get update" command
-//             string output = process.StandardOutput.ReadToEnd();
-//             string error = process.StandardError.ReadToEnd();
-//             process.WaitForExit();
-
-//             Console.WriteLine(output);
-//             Console.WriteLine(error);
-
-//             Console.WriteLine("Linux system updated!");
-//         }
-//     }
-// }
 }

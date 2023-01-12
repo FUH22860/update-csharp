@@ -5,5 +5,7 @@
 
         string result2 = Update.copyEverthingFromBackupLocationToFinalDestination();
         Console.WriteLine(result2);
+
+        Console.WriteLine(args);
     }
 }
