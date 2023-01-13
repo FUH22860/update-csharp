@@ -1,3 +1,5 @@
+using System.IO.Compression;
+
 public class Update {
     public static string getHomePath() {
         string homePath = string.Empty;
@@ -10,7 +12,7 @@ public class Update {
         }
     }
     public static string copyEverthingBeforeUpdateToBackupLocation() {
-        string targetPath = getHomePath() + "/backup/";
+        string targetPath = getHomePath() + "/backup/uncompressed/";
         
         string[] systemFilesToCopy = {"/etc/fstab", "/etc/makepkg.conf"};
         List<string> filesToCopy = new List<string>(systemFilesToCopy);
@@ -66,5 +68,25 @@ public class Update {
             Console.ForegroundColor = ConsoleColor.Red;
             return "You have not configured a backup location!";
         }
+    }
+
+    public static bool zipAllContentInBackupLocation() {
+        string targetPath = getHomePath() + "/backup/compressed/";
+        Directory.CreateDirectory(targetPath);
+        
+        string sourcePath = getHomePath() + "/backup/uncompressed/";
+        string targetZip = getHomePath() + "/backup/compressed/backup.zip";
+        ZipFile.CreateFromDirectory(sourcePath, targetZip);
+
+        string pacmanDatabaseLocation = "/var/lib/pacman/local/";
+        string pacmanDatabaseZip = getHomePath() + "/backup/compressed/pacman_database.zip";
+        ZipFile.CreateFromDirectory(pacmanDatabaseLocation, pacmanDatabaseZip);
+        
+        if (File.Exists(targetZip) && File.Exists(pacmanDatabaseZip)) {
+            return true;
+        } else {
+            return false;
+        }
+        
     }
 }
