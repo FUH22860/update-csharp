@@ -111,7 +111,9 @@ public class Update {
 
     public static bool zipAllContentInBackupLocation(string finalZipName) {
         string targetPath = getHomePath() + "/backup/compressed/";
-        Directory.CreateDirectory(targetPath);
+        if (!Directory.Exists(targetPath)) {
+            Directory.CreateDirectory(targetPath);
+        }
         
         string sourcePath = getHomePath() + "/backup/uncompressed/"; // Moved to /tmp
         string targetZip = getHomePath() + "/backup/compressed/" + finalZipName;
@@ -152,12 +154,12 @@ public class Update {
 
     public static bool zipPacmanDatabase() {
         string pacmanDatabaseLocation = "/var/lib/pacman/local/";
-        string pacmanDatabaseZip = getHomePath() + "/backup/compressed/pacman_database.zip";
+        string pacmanDatabaseZip = getHomePath() + "/backup/compressed/pacman-database.zip";
         
         if (!Directory.Exists("/tmp/backup/")) {
             Directory.CreateDirectory("/tmp/backup/");
         }
-        string newPacmanDatabaseZip = "/tmp/backup/pacman_database.zip";
+        string newPacmanDatabaseZip = "/tmp/backup/pacman-database.zip";
         File.Delete(newPacmanDatabaseZip); // Delete residual Pacman Database in tmp
         ZipFile.CreateFromDirectory(pacmanDatabaseLocation, newPacmanDatabaseZip);
 

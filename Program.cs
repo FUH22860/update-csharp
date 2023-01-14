@@ -12,7 +12,7 @@
         string result3 = Update.copyEverthingAfterUpdateToBackupLocation();
         Console.WriteLine(result3);
 
-        bool result4 = Update.zipAllContentInBackupLocation("after-backup.zip");
+        bool result4 = Update.zipAllContentInBackupLocation("post-backup.zip");
         if (result4) {
             Console.WriteLine(result4);
         } else {
