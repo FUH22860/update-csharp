@@ -52,11 +52,11 @@ Run executable
 
 - Figure out how to do options/arguments
 - Backup all necessary files
-- Shrink size of the executable
+- Hopefully shrink size of the executable
 - Potentially speed up file handling
 - Color output according to state (success = green, failure = red, info = yellow)
-- Backup pacman database
-- Compress all files to single archive
+- Option to change backup location (instead of home)
+- Keep backups for a configurable amount of days
 
 ## Sites I used to help make this project
 - [dotnetperls](https://dotnetperls.com)
