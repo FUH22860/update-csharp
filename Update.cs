@@ -1,10 +1,11 @@
+using System.Diagnostics;
 using System.IO.Compression;
 
 public class Update {
     public static string getHomePath() {
         string homePath = string.Empty;
 
-        if(Environment.OSVersion.Platform == PlatformID.Unix) {
+        if (Environment.OSVersion.Platform == PlatformID.Unix) {
             homePath = Environment.GetEnvironmentVariable("HOME");
             return homePath;
         } else {
@@ -12,19 +13,19 @@ public class Update {
         }
     }
     public static string copyEverthingBeforeUpdateToBackupLocation() {
-        string targetPath = getHomePath() + "/backup/uncompressed/";
+        string targetPath = "/tmp/backup/uncompressed/";
 
-        if (File.Exists(targetPath + "/pacman-after.txt") && File.Exists(targetPath + "/flatpak-after.txt")) {
-            File.Delete(targetPath + "/pacman-after.txt");
-            File.Delete(targetPath + "/flatpak-after.txt");
+        if (File.Exists(targetPath + "pacman-after.txt") && File.Exists(targetPath + "flatpak-after.txt")) {
+            File.Delete(targetPath + "pacman-after.txt");
+            File.Delete(targetPath + "flatpak-after.txt");
         }
         
         string[] systemFilesToCopy = {"/etc/fstab", "/etc/makepkg.conf"};
         List<string> filesToCopy = new List<string>(systemFilesToCopy);
 
-        string pacmanPackageListBeforeUpdate = getHomePath() + "/pacman-pre.txt";
+        string pacmanPackageListBeforeUpdate = targetPath + "pacman-pre.txt";
         filesToCopy.Add(pacmanPackageListBeforeUpdate);
-        string flatpakListBeforeUpdate = getHomePath() + "/flatpak-pre.txt";
+        string flatpakListBeforeUpdate = targetPath+ "flatpak-pre.txt";
         filesToCopy.Add(flatpakListBeforeUpdate);
 
         if (!Directory.Exists(targetPath)) {
@@ -45,19 +46,19 @@ public class Update {
     }
 
     public static string copyEverthingAfterUpdateToBackupLocation() {
-        string targetPath = getHomePath() + "/backup/uncompressed/"; // Use /tmp to zip and then move into /backup/compressed/
+        string targetPath = "/tmp/backup/uncompressed/"; // Use /tmp to zip and then move into /backup/compressed/
 
-        if (File.Exists(targetPath + "/pacman-pre.txt") && File.Exists(targetPath + "/flatpak-pre.txt")) {
-            File.Delete(targetPath + "/pacman-pre.txt");
-            File.Delete(targetPath + "/flatpak-pre.txt");
-            File.Delete(targetPath + "/fstab");
-            File.Delete(targetPath + "/makepkg.conf");
+        if (File.Exists(targetPath + "pacman-pre.txt") && File.Exists(targetPath + "flatpak-pre.txt")) {
+            File.Delete(targetPath + "pacman-pre.txt");
+            File.Delete(targetPath + "flatpak-pre.txt");
+            File.Delete(targetPath + "fstab");
+            File.Delete(targetPath + "makepkg.conf");
         }
 
         List<string> filesToCopy = new List<string>();
-        string pacmanPackageListBeforeUpdate = getHomePath() + "/pacman-after.txt";
+        string pacmanPackageListBeforeUpdate = targetPath + "pacman-after.txt";
         filesToCopy.Add(pacmanPackageListBeforeUpdate);
-        string flatpakListBeforeUpdate = getHomePath() + "/flatpak-after.txt";
+        string flatpakListBeforeUpdate = targetPath + "flatpak-after.txt";
         filesToCopy.Add(flatpakListBeforeUpdate);
 
         if (!Directory.Exists(targetPath)) {
@@ -115,7 +116,7 @@ public class Update {
             Directory.CreateDirectory(targetPath);
         }
         
-        string sourcePath = getHomePath() + "/backup/uncompressed/"; // Moved to /tmp
+        string sourcePath = "/tmp/backup/uncompressed/";
         string targetZip = getHomePath() + "/backup/compressed/" + finalZipName;
 
         if (!Directory.Exists("/tmp/backup/")) {
@@ -126,7 +127,6 @@ public class Update {
         ZipFile.CreateFromDirectory(sourcePath, newFinalZip);
 
         if (File.Exists(targetZip)) {
-            // ToDo verify if current zip matched old zip. If yes don't create the zip and leave the old one. If it doesn't match delete the old one.
             if (!checkForIdenticalFile(targetZip, newFinalZip)) {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"{finalZipName} is outdated");
@@ -154,42 +154,61 @@ public class Update {
 
     public static bool zipPacmanDatabase() {
         string pacmanDatabaseLocation = "/var/lib/pacman/local/";
-        string pacmanDatabaseZip = getHomePath() + "/backup/compressed/pacman-database.zip";
-        
-        if (!Directory.Exists("/tmp/backup/")) {
-            Directory.CreateDirectory("/tmp/backup/");
-        }
-        string newPacmanDatabaseZip = "/tmp/backup/pacman-database.zip";
-        File.Delete(newPacmanDatabaseZip); // Delete residual Pacman Database in tmp
-        ZipFile.CreateFromDirectory(pacmanDatabaseLocation, newPacmanDatabaseZip);
+        string oldPacmanDatabaseZip = getHomePath() + "/backup/compressed/pacman-database.zip";
+        string newPacmanDatabaseZip = "/tmp/backup/compressed/pacman-database.zip";
 
-        if (File.Exists(pacmanDatabaseZip)) {
-            if (!checkForIdenticalFile(pacmanDatabaseZip, newPacmanDatabaseZip)) {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Pacman Database is outdated");
-                File.Delete(pacmanDatabaseZip);
-                if (File.Exists(newPacmanDatabaseZip)) {
+        if (!Directory.Exists("/tmp/backup/compressed/")) {
+            Directory.CreateDirectory("/tmp/backup/compressed/");
+        }        
+        
+        try {
+            if(checkForLckFile("/var/lib/pacman/") == false) { // Only creates the zip if the db.lck doesn't exist
+                
+                makeDatabaseLock();
+            
+                if (File.Exists(newPacmanDatabaseZip)) { // Delete residual pacman database in tmp
                     File.Delete(newPacmanDatabaseZip);
-                    zipPacmanDatabase();
+                    deleteDatabaseLock(); // Delete previous created database lock
                 } else {
-                    File.Move(newPacmanDatabaseZip, pacmanDatabaseZip);
+                    ZipFile.CreateFromDirectory(pacmanDatabaseLocation, newPacmanDatabaseZip); // If no zip exists create one
+                }
+
+                if (File.Exists(oldPacmanDatabaseZip)) {
+                    if (!checkForIdenticalFile(oldPacmanDatabaseZip, newPacmanDatabaseZip)) {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Pacman Database is outdated");
+                        File.Delete(oldPacmanDatabaseZip);
+                        File.Move(newPacmanDatabaseZip, oldPacmanDatabaseZip);
+                    } else {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Pacman Database is up to date");
+                        File.Delete(newPacmanDatabaseZip);
+                    }
+                } else {
+                    if (!File.Exists(newPacmanDatabaseZip)) {
+                        ZipFile.CreateFromDirectory(pacmanDatabaseLocation, newPacmanDatabaseZip); // Create the zip in tmp
+                    }
+                    File.Move(newPacmanDatabaseZip, oldPacmanDatabaseZip);
                 }
             } else {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Pacman Database is up to date");
+                throw new ApplicationException("db.lck exists. Please try again later.");
             }
-        } else {
-            ZipFile.CreateFromDirectory(pacmanDatabaseLocation, pacmanDatabaseZip);
+        } catch (Exception e) {
+                //deleteDatabaseLock(); // Bad practice. Only for debug purpose!
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
         }
 
-        if (File.Exists(pacmanDatabaseZip)) {
+        if (File.Exists(oldPacmanDatabaseZip)) {
+            deleteDatabaseLock();
             return true;
         } else {
             return false;
         }
+        
     }
 
-    public static bool checkForIdenticalFile(string existingFilePath, string newFilePath) {
+    private static bool checkForIdenticalFile(string existingFilePath, string newFilePath) {
         byte[] existingFile = File.ReadAllBytes(existingFilePath);
         byte[] newFile = File.ReadAllBytes(newFilePath);
 
@@ -202,5 +221,51 @@ public class Update {
             return true;
         }
         return false;
+    }
+
+    private static bool checkForLckFile(string folderToCheck) {
+        if (Directory.GetFiles(folderToCheck, "*.lck").Length == 1) {
+            return true; // lck file exists
+        } else {
+            return false; // lck file doesn't exists
+        }
+    }
+
+    private static void makeDatabaseLock() {
+        var psi = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                Arguments = string.Format("-c \"cd /var/lib/pacman/ && sudo touch db.lck && sudo chmod 000 db.lck\"")
+            };
+
+        using (var p = Process.Start(psi))
+        {
+            if (p != null)
+            {
+                var strOutput = p.StandardOutput.ReadToEnd();
+                p.WaitForExit();
+            }
+        }
+    }
+
+    private static void deleteDatabaseLock() {
+        var psi = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                Arguments = string.Format("-c \"cd /var/lib/pacman/ && sudo rm -f db.lck\"")
+            };
+
+        using (var p = Process.Start(psi))
+        {
+            if (p != null)
+            {
+                var strOutput = p.StandardOutput.ReadToEnd();
+                p.WaitForExit();
+            }
+        }
     }
 }

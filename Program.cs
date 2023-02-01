@@ -1,27 +1,57 @@
 ﻿public class Program {
     static void Main(string[] args) {
-        string result = Update.copyEverthingBeforeUpdateToBackupLocation();
-        Console.WriteLine(result);
 
-        bool pacmanDatabaseResult = Update.zipPacmanDatabase();
-        Console.WriteLine(pacmanDatabaseResult);
+        string beforeUpdate() {
 
-        bool result2 = Update.zipAllContentInBackupLocation("pre-backup.zip");
-        Console.WriteLine(result2);
+            Update.copyEverthingBeforeUpdateToBackupLocation();
+            Update.zipAllContentInBackupLocation("pre-backup.zip");
+            Update.zipPacmanDatabase();
 
-        string result3 = Update.copyEverthingAfterUpdateToBackupLocation();
-        Console.WriteLine(result3);
-
-        bool result4 = Update.zipAllContentInBackupLocation("post-backup.zip");
-        if (result4) {
-            Console.WriteLine(result4);
-        } else {
-
+            Console.ForegroundColor = ConsoleColor.Green;
+            return "pre-backup complete";
         }
 
-        string result5 = Update.copyEverthingFromBackupLocationToFinalDestination(args[0]); // "/artemis/test/"
-        Console.WriteLine(result5);
+        string postUpdate() {
 
-        //Console.WriteLine(args[0]);
+            Update.copyEverthingAfterUpdateToBackupLocation();
+            Update.zipAllContentInBackupLocation("post-backup.zip");
+            Update.copyEverthingFromBackupLocationToFinalDestination(args[0]);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            return "post-backup complete";
+        }
+
+        string testPacmanDatabase() {
+
+            Update.zipPacmanDatabase();
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            return "Test complete";
+        }
+
+        // Use https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher?redirectedfrom=MSDN&view=net-7.0
+
+        try {
+            switch(args[1]) {
+                case "pre-backup":
+                    beforeUpdate();
+                    Console.ResetColor();
+                    break;
+                case "post-backup":
+                    postUpdate();
+                    Console.ResetColor();
+                    break;
+                case "testPacmanDatabase":
+                    testPacmanDatabase();
+                    Console.ResetColor();
+                    break;
+                default:
+                    Console.WriteLine("Wait! How did you do that?");
+                    break;
+            }
+        } catch (Exception e) {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(e.Message);
+        }
     }
 }
